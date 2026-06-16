@@ -351,7 +351,7 @@ function SidebarItem({
             e.stopPropagation();
             onDelete();
           }}
-          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-(--surface)"
+          className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 p-0.5 rounded hover:bg-(--surface)"
           aria-label="Delete"
         >
           <TrashIcon size={12} />
@@ -428,7 +428,7 @@ function FeedRow({
             </span>
           )}
         </button>
-        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5">
+        <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex items-center gap-0.5">
           {folders.length > 0 && (
             <select
               value={feed.folderId ?? ""}

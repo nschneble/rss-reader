@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RSS Reader
 
-## Getting Started
+A modern reinterpretation of Google Reader. Next.js 15 + SQLite + Drizzle. Single-user, local-first.
 
-First, run the development server:
+## Features
+
+- **Subscribe** to RSS and Atom feeds by URL
+- **Folder organization** — dropdown reassignment, unread counts roll up
+- **Three-pane layout** (feeds / articles / reader) on desktop, mobile pane switching
+- **Read & star state** with optimistic updates
+- **Full-text search** across titles, authors, summaries, content
+- **OPML import & export** for migration in and out
+- **Periodic refresh** (5-minute background interval) plus manual refresh
+- **Keyboard shortcuts**: `j`/`k` navigate, `s` star, `m` mark read, `r` refresh, `/` focus search, `u` toggle unread-only
+- **Sanitized content** with allowlist for safe iframes (YouTube, Vimeo)
+- **Light / dark theme** via `prefers-color-scheme`
+
+## Stack
+
+- Next.js 15 App Router (React 19, TypeScript)
+- Tailwind CSS v4
+- SQLite via better-sqlite3
+- Drizzle ORM
+- rss-parser, sanitize-html
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run db:migrate     # creates local/reader.db
+npm run db:seed        # optional — populates a few starter feeds
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server on port 3000 |
+| `npm run build` | Production build |
+| `npm start` | Run production build |
+| `npm run lint` | ESLint |
+| `npm run db:generate` | Drizzle: generate migrations from schema |
+| `npm run db:migrate` | Apply migrations to `local/reader.db` |
+| `npm run db:seed` | Subscribe to a curated set of starter feeds |
+| `npm run refresh` | Fetch all feeds once from the CLI |
 
-To learn more about Next.js, take a look at the following resources:
+## Storage
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+SQLite database at `local/reader.db` (gitignored). Override with `RSS_READER_DB=/path/to/db.sqlite`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API
 
-## Deploy on Vercel
+REST endpoints under `/api`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `GET/POST /api/feeds` — list / subscribe
+- `PATCH/DELETE /api/feeds/[id]` — reassign folder / unsubscribe
+- `POST /api/feeds/[id]/mark-read`
+- `GET /api/articles?feedId=&folderId=&starred=1&unread=1&search=&limit=&offset=`
+- `GET/PATCH /api/articles/[id]` — fetch / set read / set starred
+- `POST /api/articles/mark-all-read`
+- `GET/POST /api/folders`, `PATCH/DELETE /api/folders/[id]`
+- `POST /api/refresh?feedId=` (omit `feedId` to refresh all)
+- `GET /api/opml/export`
+- `POST /api/opml/import` (multipart form, field `file`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Layout
+
+```
+src/
+  app/
+    page.tsx           # mounts <ReaderApp />
+    layout.tsx
+    globals.css        # theme tokens + prose styles
+    api/               # REST routes
+  components/
+    reader-app.tsx     # top-level state + 3-pane shell
+    sidebar.tsx
+    article-list.tsx
+    reader.tsx
+    add-feed-dialog.tsx
+    new-folder-dialog.tsx
+    icons.tsx
+  lib/
+    db/                # client, schema, queries, migrate
+    feeds/             # rss-parser wrapper, sanitize, store
+    opml/              # build/parse OPML
+    api-client.ts      # typed fetch wrapper for components
+drizzle/               # generated migrations
+scripts/               # CLI: migrate, seed, refresh
+local/                 # SQLite DB (gitignored)
+```
+
+## License
+
+MIT

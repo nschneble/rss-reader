@@ -84,9 +84,9 @@ export function ArticleList({
               <ArrowLeftIcon size={16} />
             </button>
           )}
-          <h1 className="flex-1 text-base font-semibold tracking-tight truncate">
+          <h2 className="flex-1 text-base font-semibold tracking-tight truncate">
             {title}
-          </h1>
+          </h2>
           <button
             type="button"
             onClick={onRefresh}
@@ -151,62 +151,71 @@ export function ArticleList({
         )}
         {articles.map((a) => {
           const selected = a.id === selectedId;
+          const dateLabel = formatDate(a.publishedAt);
           return (
             <li
               key={a.id}
-              className={`group relative flex gap-3 px-4 py-3 ${
+              className={`group flex gap-1 ${
                 selected ? "bg-(--selected) text-(--selected-fg)" : ""
               } ${a.isRead ? "opacity-70" : ""} hover:bg-(--surface)`}
             >
               <button
                 type="button"
                 onClick={() => onSelect(a.id)}
-                className="absolute inset-0 w-full h-full"
-                aria-label={`Open: ${a.title}`}
+                className="flex flex-1 gap-3 px-4 py-3 text-left min-w-0"
                 aria-current={selected ? "true" : undefined}
-              />
-              <div className="relative flex flex-col items-center gap-1 pt-1 shrink-0 pointer-events-none">
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    a.isRead ? "bg-transparent" : "bg-(--accent)"
-                  }`}
-                  aria-hidden="true"
-                />
-              </div>
-              <div className="relative flex-1 min-w-0 pointer-events-none">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-xs text-(--muted) truncate">
-                    {a.feedTitle}
+                aria-pressed={selected}
+              >
+                <span className="flex flex-col items-center gap-1 pt-1 shrink-0">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      a.isRead ? "bg-transparent" : "bg-(--accent)"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">
+                    {a.isRead ? "Read." : "Unread."}
                   </span>
-                  <span className="text-xs text-(--muted) shrink-0">
-                    {formatDate(a.publishedAt)}
+                </span>
+                <span className="flex-1 min-w-0 block">
+                  <span className="flex items-baseline gap-2">
+                    <span className="text-xs text-(--muted) truncate">
+                      {a.feedTitle}
+                    </span>
+                    {dateLabel && (
+                      <span className="text-xs text-(--muted) shrink-0">
+                        {dateLabel}
+                      </span>
+                    )}
                   </span>
-                </div>
-                <h3
-                  className={`text-sm leading-snug mt-0.5 ${
-                    a.isRead ? "font-normal" : "font-semibold"
-                  }`}
-                >
-                  {a.title}
-                </h3>
-                {a.summary && (
-                  <p className="text-xs text-(--muted) mt-1 line-clamp-2">
-                    {a.summary}
-                  </p>
-                )}
-              </div>
-              <div className="relative flex flex-col gap-1 shrink-0">
+                  <span
+                    className={`block text-sm leading-snug mt-0.5 ${
+                      a.isRead ? "font-normal" : "font-semibold"
+                    }`}
+                  >
+                    {a.title}
+                  </span>
+                  {a.summary && (
+                    <span className="block text-xs text-(--muted) mt-1 line-clamp-2">
+                      {a.summary}
+                    </span>
+                  )}
+                </span>
+              </button>
+              <div
+                role="group"
+                aria-label={`Actions for ${a.title}`}
+                className="flex flex-col gap-1 shrink-0 py-3 pr-3"
+              >
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleStar(a.id, !a.isStarred);
-                  }}
+                  onClick={() => onToggleStar(a.id, !a.isStarred)}
                   className={`p-1 rounded hover:bg-(--surface-2) ${
                     a.isStarred ? "text-amber-500" : "text-(--muted)"
                   }`}
                   aria-label={a.isStarred ? "Unstar article" : "Star article"}
                   aria-pressed={a.isStarred}
+                  aria-keyshortcuts="s"
                 >
                   <StarIcon
                     size={14}
@@ -215,13 +224,11 @@ export function ArticleList({
                 </button>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleRead(a.id, !a.isRead);
-                  }}
+                  onClick={() => onToggleRead(a.id, !a.isRead)}
                   className="p-1 rounded hover:bg-(--surface-2) text-(--muted)"
                   aria-label={a.isRead ? "Mark as unread" : "Mark as read"}
                   aria-pressed={a.isRead}
+                  aria-keyshortcuts="m"
                 >
                   <CheckIcon size={14} />
                 </button>

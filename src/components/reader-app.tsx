@@ -35,6 +35,7 @@ export function ReaderApp() {
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [mobilePane, setMobilePane] = useState<Pane>("sidebar");
   const [error, setError] = useState<string | null>(null);
+  const [liveMessage, setLiveMessage] = useState("");
 
   const totalUnread = feeds.reduce((s, f) => s + f.unreadCount, 0);
   const starredCount = useMemo(
@@ -90,6 +91,17 @@ export function ReaderApp() {
   useEffect(() => {
     refreshArticles();
   }, [refreshArticles]);
+
+  useEffect(() => {
+    if (loadingArticles) return;
+    const count = articles.length;
+    setLiveMessage(
+      count === 0
+        ? `No articles in ${selectionTitle}.`
+        : `Showing ${count} article${count === 1 ? "" : "s"} in ${selectionTitle}.`,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [articles, loadingArticles]);
 
   useEffect(() => {
     if (selectedArticleId == null) {
@@ -418,6 +430,13 @@ export function ReaderApp() {
 
   return (
     <div className="h-screen flex flex-col">
+      <div
+        role="status"
+        aria-live="polite"
+        className="sr-only"
+      >
+        {liveMessage}
+      </div>
       <input
         ref={opmlInputRef}
         type="file"
