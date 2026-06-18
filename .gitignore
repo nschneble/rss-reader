@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local development scratch
 /local/
+
+# sqlite database
+/data/

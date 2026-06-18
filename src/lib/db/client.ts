@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import * as schema from "./schema";
 
-const DB_DIR = path.join(process.cwd(), "local");
+const DB_DIR = path.join(process.cwd(), "data");
 const DB_PATH = process.env.RSS_READER_DB ?? path.join(DB_DIR, "reader.db");
 
 function getDb() {

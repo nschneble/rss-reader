@@ -5,6 +5,6 @@ export default {
   out: "./drizzle",
   dialect: "sqlite",
   dbCredentials: {
-    url: process.env.RSS_READER_DB ?? "./local/reader.db",
+    url: process.env.RSS_READER_DB ?? "./data/reader.db",
   },
 } satisfies Config;

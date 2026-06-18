@@ -27,7 +27,7 @@ A modern reinterpretation of Google Reader. Next.js 15 + SQLite + Drizzle. Singl
 
 ```bash
 npm install
-npm run db:migrate     # creates local/reader.db
+npm run db:migrate     # creates data/reader.db
 npm run db:seed        # optional — populates a few starter feeds
 npm run dev            # http://localhost:3000
 ```
@@ -48,13 +48,13 @@ npm start
 | `npm start` | Run production build |
 | `npm run lint` | ESLint |
 | `npm run db:generate` | Drizzle: generate migrations from schema |
-| `npm run db:migrate` | Apply migrations to `local/reader.db` |
+| `npm run db:migrate` | Apply migrations to `data/reader.db` |
 | `npm run db:seed` | Subscribe to a curated set of starter feeds |
 | `npm run refresh` | Fetch all feeds once from the CLI |
 
 ## Storage
 
-SQLite database at `local/reader.db` (gitignored). Override with `RSS_READER_DB=/path/to/db.sqlite`.
+SQLite database at `data/reader.db` (gitignored). Override with `RSS_READER_DB=/path/to/db.sqlite`.
 
 ## API
 
@@ -95,7 +95,7 @@ src/
     api-client.ts      # typed fetch wrapper for components
 drizzle/               # generated migrations
 scripts/               # CLI: migrate, seed, refresh
-local/                 # SQLite DB (gitignored)
+data/                  # SQLite DB (gitignored)
 ```
 
 ## License
