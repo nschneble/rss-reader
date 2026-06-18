@@ -42,6 +42,7 @@
     "esbuild@0.28.1": true,
     "better-sqlite3@12.11.1": true,
     "sharp@0.34.5": true,
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "fsevents@2.3.3": true
   }
 }
