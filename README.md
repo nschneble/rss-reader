@@ -1,103 +1,98 @@
 # RSS Reader
 
-A modern reinterpretation of Google Reader. Next.js 15 + SQLite + Drizzle. Single-user, local-first.
+[![License: MIT]](LICENSE)
+
+**A modern reinterpretation of Google Reader.**
+Built with Next.js and Drizzle.
+
+<img src="rss-reader-evolution.gif" alt="RSS Reader" />
 
 ## Features
 
-- **Subscribe** to RSS and Atom feeds by URL
-- **Folder organization** — dropdown reassignment, unread counts roll up
-- **Three-pane layout** (feeds / articles / reader) on desktop, mobile pane switching
-- **Read & star state** with optimistic updates
-- **Full-text search** across titles, authors, summaries, content
-- **OPML import & export** for migration in and out
-- **Periodic refresh** (5-minute background interval) plus manual refresh
-- **Keyboard shortcuts**: `j`/`k` navigate, `s` star, `m` mark read, `r` refresh, `/` focus search, `u` toggle unread-only
-- **Sanitized content** with allowlist for safe iframes (YouTube, Vimeo)
-- **Light / dark theme** via `prefers-color-scheme`
+- **Subscribe** to RSS and Atom feeds
+- **Organize** into folders
+- **Star** your favorite articles
+- **Search** across titles, authors, summaries, and content
+- **Navigate** with keyboard shortcuts
+- **Import/export** using OPML files
 
-## Stack
+## Tech stack
 
-- Next.js 15 App Router (React 19, TypeScript)
+- Next.js 15 (React 19)
 - Tailwind CSS v4
-- SQLite via better-sqlite3
+- SQLite
 - Drizzle ORM
-- rss-parser, sanitize-html
 
-## Run it
+## Quick start
 
 ```bash
 npm install
-npm run db:migrate     # creates data/reader.db
-npm run db:seed        # optional — populates a few starter feeds
-npm run dev            # http://localhost:3000
-```
-
-Production:
-
-```bash
-npm run build
-npm start
+npm run db:migrate  # creates the database
+npm run db:seed     # populates a few starter feeds (optional)
+npm run dev         # http://localhost:3000
 ```
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Dev server on port 3000 |
-| `npm run build` | Production build |
-| `npm start` | Run production build |
-| `npm run lint` | ESLint |
-| `npm run db:generate` | Drizzle: generate migrations from schema |
-| `npm run db:migrate` | Apply migrations to `data/reader.db` |
-| `npm run db:seed` | Subscribe to a curated set of starter feeds |
-| `npm run refresh` | Fetch all feeds once from the CLI |
-
-## Storage
-
-SQLite database at `data/reader.db` (gitignored). Override with `RSS_READER_DB=/path/to/db.sqlite`.
+| What                  | Why                             |
+| --------------------- | ------------------------------- |
+| `npm run dev`         | Start development server        |
+| `npm run build`       | Production build                |
+| `npm start`           | Run production build            |
+| `npm run lint`        | Lint code                       |
+| `npm run db:generate` | Generate migrations from schema |
+| `npm run db:migrate`  | Apply migrations                |
+| `npm run db:seed`     | Subscribe to starter feeds      |
+| `npm run refresh`     | Fetch all feeds from the CLI    |
 
 ## API
 
-REST endpoints under `/api`:
-
-- `GET/POST /api/feeds` — list / subscribe
-- `PATCH/DELETE /api/feeds/[id]` — reassign folder / unsubscribe
-- `POST /api/feeds/[id]/mark-read`
-- `GET /api/articles?feedId=&folderId=&starred=1&unread=1&search=&limit=&offset=`
-- `GET/PATCH /api/articles/[id]` — fetch / set read / set starred
-- `POST /api/articles/mark-all-read`
-- `GET/POST /api/folders`, `PATCH/DELETE /api/folders/[id]`
-- `POST /api/refresh?feedId=` (omit `feedId` to refresh all)
-- `GET /api/opml/export`
-- `POST /api/opml/import` (multipart form, field `file`)
+| Method   | Endpoint                      | Description       |
+| -------- | ----------------------------- | ----------------- |
+| `GET`    | `/api/feeds`                  | List feeds        |
+| `POST`   | `/api/feeds`                  | Subscribe to feed |
+| `PATCH`  | `/api/feeds/{id}`             | Move to folder    |
+| `DELETE` | `/api/feeds/{id}`             | Unsubscribe       |
+| `POST`   | `/api/feeds/{id}/mark-read`   |                   |
+| `GET`    | `/api/articles`               |                   |
+| `GET`    | `/api/articles/{id}`          | Fetch article     |
+| `PATCH`  | `/api/articles/{id}`          | Mark read/starred |
+| `POST`   | `/api/articles/mark-all-read` |                   |
+| `GET`    | `/api/folders`                |                   |
+| `POST`   | `/api/folders`                |                   |
+| `PATCH`  | `/api/folders/{id}`           |                   |
+| `DELETE` | `/api/folders/{id}`           |                   |
+| `POST`   | `/api/refresh`                |                   |
+| `POST`   | `/api/opml/import`            | Xxx               |
+| `GET`    | `/api/opml/export`            |                   |
 
 ## Layout
 
 ```
 src/
   app/
-    page.tsx           # mounts <ReaderApp />
-    layout.tsx
-    globals.css        # theme tokens + prose styles
-    api/               # REST routes
-  components/
-    reader-app.tsx     # top-level state + 3-pane shell
-    sidebar.tsx
-    article-list.tsx
-    reader.tsx
-    add-feed-dialog.tsx
-    new-folder-dialog.tsx
-    icons.tsx
+    api/       # REST API
   lib/
-    db/                # client, schema, queries, migrate
-    feeds/             # rss-parser wrapper, sanitize, store
-    opml/              # build/parse OPML
-    api-client.ts      # typed fetch wrapper for components
-drizzle/               # generated migrations
-scripts/               # CLI: migrate, seed, refresh
-data/                  # SQLite DB (gitignored)
+    db/        # client + schema
+    feeds/     # rss-parser wrapper
+scripts/       # CLI: migrate, seed, refresh
+drizzle/       # generated migrations
+data/          # SQLite DB
 ```
+
+SQLite database is stored by default at `data/reader.db`. Override with
+`RSS_READER_DB=/path/to/db.sqlite`.
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
+
+## Acknowledgements
+
+The RSS Reader logo is an illustration by [Round Icons] on [Unsplash]. The
+color palette was generated with [Color Palette Pro].
+
+[License: MIT]: https://img.shields.io/badge/license-MIT-green
+[Round Icons]: https://unsplash.com/@roundicons/illustrations
+[Unsplash]: https://unsplash.com/illustrations
+[Color Palette Pro]: https://colorpalette.pro
