@@ -1,24 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ensureMigrated } from "@/lib/db/migrate";
+import { NextResponse } from "next/server";
 import { createFolder, listFolders } from "@/lib/db/queries";
+import { route, readBody, bad, ApiError } from "@/lib/api/http";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  ensureMigrated();
+export const GET = route(async () => {
   return NextResponse.json({ folders: listFolders() });
-}
+});
 
-export async function POST(req: NextRequest) {
-  ensureMigrated();
-  const body = (await req.json().catch(() => ({}))) as { name?: string };
+export const POST = route(async (req) => {
+  const body = await readBody<{ name?: string }>(req);
   const name = body.name?.trim();
-  if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
+  if (!name) bad("name required");
   try {
     const folder = createFolder(name);
     return NextResponse.json({ folder });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: msg }, { status: 409 });
+    // Most likely the unique-name constraint — treat as a conflict.
+    throw new ApiError(409, e instanceof Error ? e.message : String(e));
   }
-}
+});

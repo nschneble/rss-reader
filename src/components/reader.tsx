@@ -124,6 +124,7 @@ export function Reader({
                   className="!no-underline hover:underline"
                 >
                   {article.title}
+                  <span className="sr-only"> (opens in new tab)</span>
                 </a>
               ) : (
                 article.title
@@ -152,7 +153,7 @@ export function Reader({
                   rel="noopener noreferrer"
                   className="text-(--accent) underline"
                 >
-                  Read original →
+                  Read original →<span className="sr-only"> (opens in new tab)</span>
                 </a>
               )}
             </p>

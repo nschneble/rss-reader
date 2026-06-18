@@ -1,6 +1,6 @@
 import { ensureMigrated } from "../src/lib/db/migrate";
 import { subscribeToFeed } from "../src/lib/feeds/store";
-import { createFolder, listFolders } from "../src/lib/db/queries";
+import { createFolderResolver } from "../src/lib/db/folders";
 
 type SeedEntry = { folder: string; url: string };
 
@@ -16,17 +16,7 @@ const SEED: SeedEntry[] = [
 
 async function main() {
   ensureMigrated();
-  const existing = new Map(
-    listFolders().map((f) => [f.name.toLowerCase(), f.id]),
-  );
-  function folderIdFor(name: string): number {
-    const key = name.toLowerCase();
-    const found = existing.get(key);
-    if (found) return found;
-    const folder = createFolder(name);
-    existing.set(key, folder.id);
-    return folder.id;
-  }
+  const folderIdFor = createFolderResolver();
 
   let added = 0;
   for (const entry of SEED) {

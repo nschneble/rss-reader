@@ -22,7 +22,9 @@ export function sanitizeContent(html: string | undefined | null): string {
   return sanitizeHtml(html, {
     allowedTags: ALLOWED_TAGS,
     allowedAttributes: ALLOWED_ATTRS,
-    allowedSchemes: ["http", "https", "mailto", "data"],
+    // No "data:" — data URIs in feed content are an XSS / payload-smuggling
+    // vector (e.g. data:text/html). Images load over http(s) only.
+    allowedSchemes: ["http", "https", "mailto"],
     allowedIframeHostnames: ["www.youtube.com", "youtube.com", "player.vimeo.com", "vimeo.com"],
     transformTags: {
       a: (tagName, attribs) => ({

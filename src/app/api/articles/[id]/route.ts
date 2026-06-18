@@ -1,37 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ensureMigrated } from "@/lib/db/migrate";
+import { NextResponse } from "next/server";
 import { getArticle, setArticleRead, setArticleStarred } from "@/lib/db/queries";
+import { route, requireId, readBody, bad, type RouteContext } from "@/lib/api/http";
 
 export const runtime = "nodejs";
 
-export async function GET(
-  _req: NextRequest,
-  ctx: { params: Promise<{ id: string }> },
-) {
-  ensureMigrated();
-  const { id } = await ctx.params;
-  const artId = Number(id);
-  if (!Number.isInteger(artId))
-    return NextResponse.json({ error: "bad id" }, { status: 400 });
-  const art = getArticle(artId);
-  if (!art) return NextResponse.json({ error: "not found" }, { status: 404 });
-  return NextResponse.json({ article: art });
-}
+export const GET = route<RouteContext>(async (_req, ctx) => {
+  const id = await requireId(ctx);
+  const article = getArticle(id);
+  if (!article) bad("not found", 404);
+  return NextResponse.json({ article });
+});
 
-export async function PATCH(
-  req: NextRequest,
-  ctx: { params: Promise<{ id: string }> },
-) {
-  ensureMigrated();
-  const { id } = await ctx.params;
-  const artId = Number(id);
-  if (!Number.isInteger(artId))
-    return NextResponse.json({ error: "bad id" }, { status: 400 });
-  const body = (await req.json().catch(() => ({}))) as {
-    isRead?: boolean;
-    isStarred?: boolean;
-  };
-  if (body.isRead !== undefined) setArticleRead(artId, body.isRead);
-  if (body.isStarred !== undefined) setArticleStarred(artId, body.isStarred);
+export const PATCH = route<RouteContext>(async (req, ctx) => {
+  const id = await requireId(ctx);
+  const body = await readBody<{ isRead?: boolean; isStarred?: boolean }>(req);
+  if (body.isRead !== undefined) setArticleRead(id, body.isRead);
+  if (body.isStarred !== undefined) setArticleStarred(id, body.isStarred);
   return NextResponse.json({ ok: true });
-}
+});

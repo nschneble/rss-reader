@@ -13,6 +13,7 @@ import { ArticleList } from "./article-list";
 import { Reader } from "./reader";
 import { AddFeedDialog } from "./add-feed-dialog";
 import { NewFolderDialog } from "./new-folder-dialog";
+import { ConfirmDialog, type ConfirmRequest } from "./confirm-dialog";
 
 type Pane = "sidebar" | "list" | "reader";
 
@@ -36,6 +37,12 @@ export function ReaderApp() {
   const [mobilePane, setMobilePane] = useState<Pane>("sidebar");
   const [error, setError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
+  // Separate from `liveMessage` (driven by the article-list effect) so action
+  // results — mark-all, refresh, OPML import — aren't clobbered by a list update.
+  const [actionMessage, setActionMessage] = useState("");
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
+
+  const anyModalOpen = addFeedOpen || newFolderOpen || confirmRequest != null;
 
   const totalUnread = feeds.reduce((s, f) => s + f.unreadCount, 0);
   const starredCount = useMemo(
@@ -234,24 +241,31 @@ export function ReaderApp() {
     [],
   );
 
-  const handleMarkAllRead = useCallback(async () => {
-    if (!confirm("Mark all visible articles as read?")) return;
-    if (selection.kind === "feed") {
-      try {
-        await api.feeds.markRead(selection.id);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      }
-    } else {
-      try {
-        await api.articles.markAllRead();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      }
-    }
-    await refreshSidebar();
-    await refreshArticles();
-  }, [selection, refreshSidebar, refreshArticles]);
+  const handleMarkAllRead = useCallback(() => {
+    setConfirmRequest({
+      title: "Mark all read",
+      message: `Mark all articles in ${selectionTitle} as read?`,
+      confirmLabel: "Mark all read",
+      onConfirm: async () => {
+        const params: Parameters<typeof api.articles.markAllRead>[0] = {
+          search: debouncedSearch.trim() || undefined,
+        };
+        if (selection.kind === "feed") params.feedId = selection.id;
+        else if (selection.kind === "folder") params.folderId = selection.id;
+        else if (selection.kind === "starred") params.starred = true;
+        try {
+          const { updated } = await api.articles.markAllRead(params);
+          setActionMessage(
+            `Marked ${updated} article${updated === 1 ? "" : "s"} as read in ${selectionTitle}.`,
+          );
+        } catch (e) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+        await refreshSidebar();
+        await refreshArticles();
+      },
+    });
+  }, [selection, selectionTitle, debouncedSearch, refreshSidebar, refreshArticles]);
 
   const handleRefresh = useCallback(async () => {
     if (refreshing) return;
@@ -291,32 +305,50 @@ export function ReaderApp() {
   );
 
   const handleRemoveFeed = useCallback(
-    async (id: number) => {
-      try {
-        await api.feeds.remove(id);
-        if (selection.kind === "feed" && selection.id === id) {
-          setSelection({ kind: "all" });
-        }
-        await refreshSidebar();
-        await refreshArticles();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      }
+    (id: number, title: string) => {
+      setConfirmRequest({
+        title: "Unsubscribe",
+        message: `Unsubscribe from "${title}"? Articles will be deleted.`,
+        confirmLabel: "Unsubscribe",
+        destructive: true,
+        onConfirm: async () => {
+          try {
+            await api.feeds.remove(id);
+            if (selection.kind === "feed" && selection.id === id) {
+              setSelection({ kind: "all" });
+            }
+            setActionMessage(`Unsubscribed from ${title}.`);
+            await refreshSidebar();
+            await refreshArticles();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+          }
+        },
+      });
     },
     [selection, refreshSidebar, refreshArticles],
   );
 
   const handleRemoveFolder = useCallback(
-    async (id: number) => {
-      try {
-        await api.folders.remove(id);
-        if (selection.kind === "folder" && selection.id === id) {
-          setSelection({ kind: "all" });
-        }
-        await refreshSidebar();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      }
+    (id: number, name: string) => {
+      setConfirmRequest({
+        title: "Delete folder",
+        message: `Delete folder "${name}"? Feeds inside will be unfiled.`,
+        confirmLabel: "Delete folder",
+        destructive: true,
+        onConfirm: async () => {
+          try {
+            await api.folders.remove(id);
+            if (selection.kind === "folder" && selection.id === id) {
+              setSelection({ kind: "all" });
+            }
+            setActionMessage(`Deleted folder ${name}.`);
+            await refreshSidebar();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+          }
+        },
+      });
     },
     [selection, refreshSidebar],
   );
@@ -348,12 +380,14 @@ export function ReaderApp() {
       try {
         const result = await api.opml.importFile(file);
         await refreshSidebar();
-        alert(
-          `Imported ${result.imported} feeds, skipped ${result.skipped}.` +
-            (result.errors.length
-              ? `\nErrors:\n${result.errors.slice(0, 5).join("\n")}`
-              : ""),
+        setActionMessage(
+          `Imported ${result.imported} feed${result.imported === 1 ? "" : "s"}, skipped ${result.skipped}.`,
         );
+        if (result.errors.length) {
+          setError(
+            `OPML import had ${result.errors.length} error${result.errors.length === 1 ? "" : "s"}: ${result.errors.slice(0, 5).join("; ")}`,
+          );
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -430,12 +464,18 @@ export function ReaderApp() {
 
   return (
     <div className="h-screen flex flex-col">
-      <div
-        role="status"
-        aria-live="polite"
-        className="sr-only"
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-(--background) focus:text-(--foreground) focus:px-3 focus:py-2 focus:rounded focus:border focus:border-(--border) focus:shadow-lg"
       >
+        Skip to articles
+      </a>
+      <h1 className="sr-only">RSS Reader</h1>
+      <div role="status" aria-live="polite" className="sr-only">
         {liveMessage}
+      </div>
+      <div role="status" aria-live="polite" className="sr-only">
+        {actionMessage}
       </div>
       <input
         ref={opmlInputRef}
@@ -447,7 +487,10 @@ export function ReaderApp() {
         tabIndex={-1}
       />
 
-      <div className="grid flex-1 min-h-0 lg:grid-cols-[260px_minmax(340px,400px)_1fr]">
+      <div
+        className="grid flex-1 min-h-0 lg:grid-cols-[260px_minmax(340px,400px)_1fr]"
+        inert={anyModalOpen || undefined}
+      >
         <div
           className={`${
             mobilePane === "sidebar" ? "block" : "hidden"
@@ -474,6 +517,7 @@ export function ReaderApp() {
           />
         </div>
 
+        <main id="main-content" tabIndex={-1} className="contents">
         <div
           className={`${
             mobilePane === "list" ? "block" : "hidden"
@@ -517,6 +561,7 @@ export function ReaderApp() {
             onBack={() => setMobilePane("list")}
           />
         </div>
+        </main>
       </div>
 
       {error && (
@@ -545,6 +590,10 @@ export function ReaderApp() {
         open={newFolderOpen}
         onClose={() => setNewFolderOpen(false)}
         onSubmit={handleCreateFolder}
+      />
+      <ConfirmDialog
+        request={confirmRequest}
+        onClose={() => setConfirmRequest(null)}
       />
     </div>
   );

@@ -1,30 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ensureMigrated } from "@/lib/db/migrate";
+import { NextResponse } from "next/server";
 import { listFeedsWithCounts } from "@/lib/db/queries";
 import { subscribeToFeed } from "@/lib/feeds/store";
+import { route, readBody, bad, ApiError } from "@/lib/api/http";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  ensureMigrated();
+export const GET = route(async () => {
   return NextResponse.json({ feeds: listFeedsWithCounts() });
-}
+});
 
-export async function POST(req: NextRequest) {
-  ensureMigrated();
-  let body: { url?: string; folderId?: number | null };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "invalid json" }, { status: 400 });
-  }
+export const POST = route(async (req) => {
+  const body = await readBody<{ url?: string; folderId?: number | null }>(req);
   const url = body.url?.trim();
-  if (!url) return NextResponse.json({ error: "url required" }, { status: 400 });
+  if (!url) bad("url required");
   try {
     const result = await subscribeToFeed(url, body.folderId ?? null);
     return NextResponse.json({ feed: result.feed, newArticles: result.newArticles });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: msg }, { status: 502 });
+    // Upstream feed fetch/parse failed — surface as a bad gateway.
+    throw new ApiError(502, e instanceof Error ? e.message : String(e));
   }
-}
+});

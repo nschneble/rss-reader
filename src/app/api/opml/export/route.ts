@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { ensureMigrated } from "@/lib/db/migrate";
 import { listFeedsWithCounts, listFolders } from "@/lib/db/queries";
 import { buildOpml } from "@/lib/opml/opml";
+import { route } from "@/lib/api/http";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  ensureMigrated();
+export const GET = route(async () => {
   const feeds = listFeedsWithCounts();
   const folders = listFolders();
   const xml = buildOpml(
@@ -24,4 +23,4 @@ export async function GET() {
       "content-disposition": `attachment; filename="subscriptions.opml"`,
     },
   });
-}
+});
