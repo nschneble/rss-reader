@@ -12,6 +12,9 @@ export async function subscribeToFeed(
   url: string,
   folderId: number | null = null,
 ): Promise<SubscribeResult> {
+  // Subscribing to a URL you already follow is a no-op subscribe but a real
+  // refresh: rather than erroring on the unique-url constraint, we just pull any
+  // new articles for the existing feed.
   const existing = db.select().from(feeds).where(eq(feeds.url, url)).get();
   if (existing) {
     const result = await refreshFeed(existing.id);
@@ -43,6 +46,9 @@ export async function refreshFeed(
   try {
     const parsed = await fetchAndParseFeed(feed.url);
     const newArticles = upsertArticles(feed.id, parsed);
+    // On refresh, existing values win: we only backfill fields the feed never
+    // had, so a manually-set title (or one from an earlier fetch) isn't
+    // clobbered by whatever the feed currently advertises.
     const updated = db
       .update(feeds)
       .set({
@@ -89,6 +95,9 @@ export async function refreshAllFeeds(): Promise<{
   return { total: all.length, succeeded, failed, newArticles };
 }
 
+// Inserts only articles we haven't seen before. Dedup is by the
+// (feed_id, guid) unique index: onConflictDoNothing skips known items, so the
+// returned count is the number of genuinely new articles.
 function upsertArticles(feedId: number, parsed: ParsedFeed): number {
   let inserted = 0;
   for (const item of parsed.items) {

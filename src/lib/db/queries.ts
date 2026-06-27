@@ -1,6 +1,6 @@
 import { db } from "./client";
 import { feeds, articles, folders } from "./schema";
-import { eq, and, desc, sql, or, like, isNull } from "drizzle-orm";
+import { eq, and, desc, sql, or, like, inArray, type SQL } from "drizzle-orm";
 
 export type ArticleListItem = {
   id: number;
@@ -26,8 +26,10 @@ export type ArticleFilter = {
   offset?: number;
 };
 
-export function listArticles(filter: ArticleFilter = {}): ArticleListItem[] {
-  const conditions = [] as ReturnType<typeof eq>[];
+// Shared WHERE builder so the article list and "mark all read" operate on the
+// exact same set of rows for a given filter.
+function articleConditions(filter: ArticleFilter): SQL[] {
+  const conditions: SQL[] = [];
   if (filter.feedId != null) conditions.push(eq(articles.feedId, filter.feedId));
   if (filter.folderId != null) conditions.push(eq(feeds.folderId, filter.folderId));
   if (filter.starred) conditions.push(eq(articles.isStarred, true));
@@ -40,8 +42,13 @@ export function listArticles(filter: ArticleFilter = {}): ArticleListItem[] {
       like(articles.content, q),
       like(articles.author, q),
     );
-    if (search) conditions.push(search as unknown as ReturnType<typeof eq>);
+    if (search) conditions.push(search);
   }
+  return conditions;
+}
+
+export function listArticles(filter: ArticleFilter = {}): ArticleListItem[] {
+  const conditions = articleConditions(filter);
 
   const limit = filter.limit ?? 100;
   const offset = filter.offset ?? 0;
@@ -109,8 +116,23 @@ export function markFeedRead(feedId: number) {
     .run();
 }
 
-export function markAllRead() {
-  return db.update(articles).set({ isRead: true }).where(eq(articles.isRead, false)).run();
+// Marks read exactly the unread rows matching `filter` (the currently-visible
+// set). With no filter this is every unread article; with a folder/feed/starred
+// filter it is scoped to that view — so "mark all read" never reaches beyond
+// what the user is looking at. The folder filter lives on `feeds`, so we select
+// matching ids via a join and update by id.
+export function markAllRead(filter: ArticleFilter = {}) {
+  const conditions = [...articleConditions(filter), eq(articles.isRead, false)];
+  const targetIds = db
+    .select({ id: articles.id })
+    .from(articles)
+    .innerJoin(feeds, eq(articles.feedId, feeds.id))
+    .where(and(...conditions));
+  return db
+    .update(articles)
+    .set({ isRead: true })
+    .where(inArray(articles.id, targetIds))
+    .run();
 }
 
 export type FeedWithCounts = {
@@ -167,36 +189,4 @@ export function assignFeedToFolder(feedId: number, folderId: number | null) {
 
 export function deleteFeed(id: number) {
   return db.delete(feeds).where(eq(feeds.id, id)).run();
-}
-
-export function getStarredCount(): number {
-  const r = db
-    .select({ c: sql<number>`COUNT(*)` })
-    .from(articles)
-    .where(eq(articles.isStarred, true))
-    .get();
-  return r?.c ?? 0;
-}
-
-export function getUnreadTotal(): number {
-  const r = db
-    .select({ c: sql<number>`COUNT(*)` })
-    .from(articles)
-    .where(eq(articles.isRead, false))
-    .get();
-  return r?.c ?? 0;
-}
-
-export function getUnreadInFolder(folderId: number | null): number {
-  const condition =
-    folderId === null
-      ? and(isNull(feeds.folderId), eq(articles.isRead, false))
-      : and(eq(feeds.folderId, folderId), eq(articles.isRead, false));
-  const r = db
-    .select({ c: sql<number>`COUNT(*)` })
-    .from(articles)
-    .innerJoin(feeds, eq(articles.feedId, feeds.id))
-    .where(condition)
-    .get();
-  return r?.c ?? 0;
 }

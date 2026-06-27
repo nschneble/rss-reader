@@ -1,18 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ensureMigrated } from "@/lib/db/migrate";
+import { NextResponse } from "next/server";
 import { markFeedRead } from "@/lib/db/queries";
+import { route, requireId, type RouteContext } from "@/lib/api/http";
 
 export const runtime = "nodejs";
 
-export async function POST(
-  _req: NextRequest,
-  ctx: { params: Promise<{ id: string }> },
-) {
-  ensureMigrated();
-  const { id } = await ctx.params;
-  const feedId = Number(id);
-  if (!Number.isInteger(feedId))
-    return NextResponse.json({ error: "bad id" }, { status: 400 });
-  markFeedRead(feedId);
+export const POST = route<RouteContext>(async (_req, ctx) => {
+  const id = await requireId(ctx);
+  markFeedRead(id);
   return NextResponse.json({ ok: true });
-}
+});

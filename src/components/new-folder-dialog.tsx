@@ -56,11 +56,14 @@ export function NewFolderDialog({ open, onClose, onSubmit }: Props) {
             onChange={(e) => setName(e.target.value)}
             required
             autoComplete="off"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "folder-name-error" : undefined}
             className="w-full px-3 py-2 rounded border border-(--border) bg-(--surface) focus:border-(--accent) outline-none"
           />
         </div>
         {error && (
           <p
+            id="folder-name-error"
             role="alert"
             className="text-sm text-(--danger) bg-(--danger)/10 px-3 py-2 rounded"
           >

@@ -33,8 +33,8 @@ type Props = {
   onAddFeed: () => void;
   onImportOpml: () => void;
   onCreateFolder: () => void;
-  onRemoveFeed: (id: number) => void;
-  onRemoveFolder: (id: number) => void;
+  onRemoveFeed: (id: number, title: string) => void;
+  onRemoveFolder: (id: number, name: string) => void;
   onAssignFolder: (feedId: number, folderId: number | null) => void;
   onRefreshAll: () => void;
   refreshing: boolean;
@@ -132,7 +132,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onCreateFolder}
-            className="p-1 rounded hover:bg-(--surface-2)"
+            className="min-w-6 min-h-6 inline-flex items-center justify-center p-1 rounded hover:bg-(--surface-2)"
             aria-label="New folder"
             title="New folder"
           >
@@ -141,7 +141,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onImportOpml}
-            className="p-1 rounded hover:bg-(--surface-2)"
+            className="min-w-6 min-h-6 inline-flex items-center justify-center p-1 rounded hover:bg-(--surface-2)"
             aria-label="Import OPML"
             title="Import OPML"
           >
@@ -149,7 +149,7 @@ export function Sidebar({
           </button>
           <a
             href="/api/opml/export"
-            className="p-1 rounded hover:bg-(--surface-2) inline-flex"
+            className="min-w-6 min-h-6 inline-flex items-center justify-center p-1 rounded hover:bg-(--surface-2)"
             aria-label="Export OPML"
             title="Export OPML"
           >
@@ -158,7 +158,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onAddFeed}
-            className="p-1 rounded hover:bg-(--surface-2)"
+            className="min-w-6 min-h-6 inline-flex items-center justify-center p-1 rounded hover:bg-(--surface-2)"
             aria-label="Add feed"
             title="Add feed"
           >
@@ -180,15 +180,17 @@ export function Sidebar({
               kind: "folder",
               id: folder.id,
             });
+            const sublistId = `folder-${folder.id}-feeds`;
             return (
               <li key={folder.id}>
                 <div className="flex items-center group">
                   <button
                     type="button"
                     onClick={() => toggleFolder(folder.id)}
-                    className="p-1 rounded hover:bg-(--surface-2)"
+                    className="min-w-6 min-h-6 inline-flex items-center justify-center p-1 rounded hover:bg-(--surface-2)"
                     aria-label={`${isOpen ? "Collapse" : "Expand"} ${folder.name}`}
                     aria-expanded={isOpen}
+                    aria-controls={sublistId}
                   >
                     {isOpen ? (
                       <ChevronDownIcon size={12} />
@@ -210,47 +212,29 @@ export function Sidebar({
                     onClick={() =>
                       onSelect({ kind: "folder", id: folder.id })
                     }
-                    onDelete={() => {
-                      if (
-                        confirm(
-                          `Delete folder "${folder.name}"? Feeds inside will be unfiled.`,
-                        )
-                      ) {
-                        onRemoveFolder(folder.id);
-                      }
-                    }}
+                    onDelete={() => onRemoveFolder(folder.id, folder.name)}
                   />
                 </div>
-                {isOpen && folderFeeds.length > 0 && (
-                  <ul className="ml-5 space-y-0.5 mt-0.5">
-                    {folderFeeds.map((feed) => (
-                      <FeedRow
-                        key={feed.id}
-                        feed={feed}
-                        folders={folders}
-                        selected={isSelected(selection, {
-                          kind: "feed",
-                          id: feed.id,
-                        })}
-                        onSelect={() =>
-                          onSelect({ kind: "feed", id: feed.id })
-                        }
-                        onRemove={() => {
-                          if (
-                            confirm(
-                              `Unsubscribe from "${feed.title}"? Articles will be deleted.`,
-                            )
-                          ) {
-                            onRemoveFeed(feed.id);
-                          }
-                        }}
-                        onAssign={(folderId) =>
-                          onAssignFolder(feed.id, folderId)
-                        }
-                      />
-                    ))}
-                  </ul>
-                )}
+                <ul
+                  id={sublistId}
+                  hidden={!isOpen || folderFeeds.length === 0}
+                  className="ml-5 space-y-0.5 mt-0.5"
+                >
+                  {folderFeeds.map((feed) => (
+                    <FeedRow
+                      key={feed.id}
+                      feed={feed}
+                      folders={folders}
+                      selected={isSelected(selection, {
+                        kind: "feed",
+                        id: feed.id,
+                      })}
+                      onSelect={() => onSelect({ kind: "feed", id: feed.id })}
+                      onRemove={() => onRemoveFeed(feed.id, feed.title)}
+                      onAssign={(folderId) => onAssignFolder(feed.id, folderId)}
+                    />
+                  ))}
+                </ul>
               </li>
             );
           })}
@@ -258,7 +242,7 @@ export function Sidebar({
           {unfiledFeeds.length > 0 && (
             <li className="mt-2">
               {folders.length > 0 && (
-                <h3 className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-(--muted)">
+                <h3 className="px-2 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-(--muted)">
                   Unfiled
                 </h3>
               )}
@@ -273,15 +257,7 @@ export function Sidebar({
                       id: feed.id,
                     })}
                     onSelect={() => onSelect({ kind: "feed", id: feed.id })}
-                    onRemove={() => {
-                      if (
-                        confirm(
-                          `Unsubscribe from "${feed.title}"? Articles will be deleted.`,
-                        )
-                      ) {
-                        onRemoveFeed(feed.id);
-                      }
-                    }}
+                    onRemove={() => onRemoveFeed(feed.id, feed.title)}
                     onAssign={(folderId) =>
                       onAssignFolder(feed.id, folderId)
                     }
@@ -293,7 +269,7 @@ export function Sidebar({
 
           {feeds.length === 0 && (
             <li className="px-3 py-6 text-center text-(--muted) text-xs">
-              No feeds yet. Click <PlusIcon size={12} className="inline mb-0.5" /> to add one.
+              No feeds yet. Use the Add feed button to subscribe.
             </li>
           )}
         </ul>
@@ -351,7 +327,7 @@ function SidebarItem({
             e.stopPropagation();
             onDelete();
           }}
-          className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 p-0.5 rounded hover:bg-(--surface)"
+          className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 min-w-6 min-h-6 inline-flex items-center justify-center p-0.5 rounded hover:bg-(--surface)"
           aria-label="Delete"
         >
           <TrashIcon size={12} />
@@ -389,7 +365,7 @@ function FeedRow({
           type="button"
           onClick={onSelect}
           className="flex flex-1 items-center gap-2 text-left min-w-0"
-          aria-current={selected ? "true" : undefined}
+          aria-current={selected ? "page" : undefined}
           title={feed.title}
         >
           <span className="shrink-0 w-4 h-4 flex items-center justify-center text-(--muted)">
@@ -437,7 +413,7 @@ function FeedRow({
                 onAssign(v === "" ? null : Number(v));
               }}
               onClick={(e) => e.stopPropagation()}
-              className="text-xs bg-transparent rounded p-0.5 max-w-[6rem]"
+              className="text-xs bg-transparent rounded p-0.5 min-h-6 max-w-[6rem]"
               aria-label={`Folder for ${feed.title}`}
             >
               <option value="">Unfiled</option>
@@ -454,7 +430,7 @@ function FeedRow({
               e.stopPropagation();
               onRemove();
             }}
-            className="p-0.5 rounded hover:bg-(--surface)"
+            className="min-w-6 min-h-6 inline-flex items-center justify-center p-0.5 rounded hover:bg-(--surface)"
             aria-label={`Unsubscribe from ${feed.title}`}
           >
             <TrashIcon size={12} />

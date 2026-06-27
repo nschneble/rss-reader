@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { CloseIcon } from "./icons";
 
 const FOCUSABLE =
@@ -13,6 +13,9 @@ type Props = {
   title: string;
   children: ReactNode;
   maxWidth?: string;
+  role?: "dialog" | "alertdialog";
+  describedById?: string;
+  initialFocusRef?: RefObject<HTMLElement | null>;
 };
 
 export function Dialog({
@@ -22,22 +25,34 @@ export function Dialog({
   title,
   children,
   maxWidth = "max-w-md",
+  role = "dialog",
+  describedById,
+  initialFocusRef,
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActive = useRef<HTMLElement | null>(null);
+
+  // Keep the latest onClose in a ref so the focus-trap effect can depend only
+  // on `open`. Including `onClose` (often a fresh inline closure each render)
+  // would re-run the effect on every parent re-render, and its cleanup would
+  // restore focus to the trigger while the dialog is still open.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
     previousActive.current = document.activeElement as HTMLElement | null;
     const dialog = dialogRef.current;
     const focusables = dialog?.querySelectorAll<HTMLElement>(FOCUSABLE);
-    const first = focusables?.[0];
-    setTimeout(() => first?.focus(), 30);
+    const target = initialFocusRef?.current ?? focusables?.[0];
+    const raf = requestAnimationFrame(() => target?.focus());
 
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key === "Tab" && dialog) {
@@ -61,11 +76,14 @@ export function Dialog({
       }
     }
     document.addEventListener("keydown", onKey);
+    // Cleanup runs only when `open` flips to false (or unmount) — i.e. an actual
+    // close — so focus returns to the trigger exactly once.
     return () => {
+      cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKey);
       previousActive.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open, initialFocusRef]);
 
   if (!open) return null;
 
@@ -78,9 +96,10 @@ export function Dialog({
     >
       <div
         ref={dialogRef}
-        role="dialog"
+        role={role}
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={describedById}
         className={`w-full ${maxWidth} bg-(--background) text-(--foreground) rounded-lg shadow-lg border border-(--border)`}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-(--border)">

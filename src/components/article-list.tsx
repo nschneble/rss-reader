@@ -163,8 +163,7 @@ export function ArticleList({
                 type="button"
                 onClick={() => onSelect(a.id)}
                 className="flex flex-1 gap-3 px-4 py-3 text-left min-w-0"
-                aria-current={selected ? "true" : undefined}
-                aria-pressed={selected}
+                aria-current={selected ? "page" : undefined}
               >
                 <span className="flex flex-col items-center gap-1 pt-1 shrink-0">
                   <span
@@ -210,7 +209,7 @@ export function ArticleList({
                 <button
                   type="button"
                   onClick={() => onToggleStar(a.id, !a.isStarred)}
-                  className={`p-1 rounded hover:bg-(--surface-2) ${
+                  className={`min-w-6 min-h-6 inline-flex items-center justify-center p-1 rounded hover:bg-(--surface-2) ${
                     a.isStarred ? "text-amber-500" : "text-(--muted)"
                   }`}
                   aria-label={a.isStarred ? "Unstar article" : "Star article"}
@@ -225,7 +224,7 @@ export function ArticleList({
                 <button
                   type="button"
                   onClick={() => onToggleRead(a.id, !a.isRead)}
-                  className="p-1 rounded hover:bg-(--surface-2) text-(--muted)"
+                  className="min-w-6 min-h-6 inline-flex items-center justify-center p-1 rounded hover:bg-(--surface-2) text-(--muted)"
                   aria-label={a.isRead ? "Mark as unread" : "Mark as read"}
                   aria-pressed={a.isRead}
                   aria-keyshortcuts="m"

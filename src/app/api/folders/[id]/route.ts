@@ -1,34 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ensureMigrated } from "@/lib/db/migrate";
+import { NextResponse } from "next/server";
 import { deleteFolder, renameFolder } from "@/lib/db/queries";
+import { route, requireId, readBody, bad, type RouteContext } from "@/lib/api/http";
 
 export const runtime = "nodejs";
 
-export async function PATCH(
-  req: NextRequest,
-  ctx: { params: Promise<{ id: string }> },
-) {
-  ensureMigrated();
-  const { id } = await ctx.params;
-  const folderId = Number(id);
-  if (!Number.isInteger(folderId))
-    return NextResponse.json({ error: "bad id" }, { status: 400 });
-  const body = (await req.json().catch(() => ({}))) as { name?: string };
+export const PATCH = route<RouteContext>(async (req, ctx) => {
+  const id = await requireId(ctx);
+  const body = await readBody<{ name?: string }>(req);
   const name = body.name?.trim();
-  if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
-  const folder = renameFolder(folderId, name);
+  if (!name) bad("name required");
+  const folder = renameFolder(id, name);
   return NextResponse.json({ folder });
-}
+});
 
-export async function DELETE(
-  _req: NextRequest,
-  ctx: { params: Promise<{ id: string }> },
-) {
-  ensureMigrated();
-  const { id } = await ctx.params;
-  const folderId = Number(id);
-  if (!Number.isInteger(folderId))
-    return NextResponse.json({ error: "bad id" }, { status: 400 });
-  deleteFolder(folderId);
+export const DELETE = route<RouteContext>(async (_req, ctx) => {
+  const id = await requireId(ctx);
+  deleteFolder(id);
   return NextResponse.json({ ok: true });
-}
+});

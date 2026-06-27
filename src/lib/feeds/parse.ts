@@ -1,5 +1,6 @@
 import Parser from "rss-parser";
 import { extractSummary, sanitizeContent } from "./sanitize";
+import { safeFetchFeed } from "./safe-fetch";
 
 export type ParsedFeed = {
   title: string;
@@ -26,14 +27,12 @@ type CustomItem = {
   id?: string;
 };
 
+// Fetching (and its User-Agent/timeout/SSRF guards) is handled by safeFetchFeed;
+// this parser only turns an already-fetched XML string into structured items.
 const parser: Parser<Record<string, unknown>, CustomItem> = new Parser({
   customFields: {
     item: ["content:encoded", "dc:creator"],
   },
-  headers: {
-    "User-Agent": "RSS Reader/0.1 (https://github.com/nschneble/rss-reader)",
-  },
-  timeout: 15_000,
 });
 
 function pickGuid(item: Parser.Item & { id?: string }): string {
@@ -55,6 +54,12 @@ function pickContent(item: Parser.Item & CustomItem): string {
   );
 }
 
+function parseDate(value: string | undefined): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function pickFavicon(siteUrl: string | undefined | null): string | null {
   if (!siteUrl) return null;
   try {
@@ -66,7 +71,8 @@ function pickFavicon(siteUrl: string | undefined | null): string | null {
 }
 
 export async function fetchAndParseFeed(url: string): Promise<ParsedFeed> {
-  const parsed = await parser.parseURL(url);
+  const xml = await safeFetchFeed(url);
+  const parsed = await parser.parseString(xml);
   const siteUrl = parsed.link ?? null;
   return {
     title: parsed.title?.trim() || siteUrl || url,
@@ -83,11 +89,7 @@ export async function fetchAndParseFeed(url: string): Promise<ParsedFeed> {
         author: item.creator || item["dc:creator"] || item.author || null,
         content: sanitizeContent(rawContent),
         summary: extractSummary(rawContent),
-        publishedAt: item.isoDate
-          ? new Date(item.isoDate)
-          : item.pubDate
-            ? new Date(item.pubDate)
-            : null,
+        publishedAt: parseDate(item.isoDate) ?? parseDate(item.pubDate),
       };
     }),
   };

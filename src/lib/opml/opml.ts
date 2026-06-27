@@ -17,7 +17,10 @@ export function buildOpml(
   );
   const grouped = new Map<number | "none", typeof feeds>();
   for (const f of feeds) {
-    const key: number | "none" = f.folderId ?? "none";
+    // A feed whose folderId no longer maps to a folder (e.g. the folder was
+    // deleted) is treated as unfiled so it still appears in the export.
+    const key: number | "none" =
+      f.folderId != null && folderMap.has(f.folderId) ? f.folderId : "none";
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key)!.push(f);
   }
@@ -98,10 +101,12 @@ export function parseOpml(xml: string): ParsedOutline[] {
 }
 
 function decodeEntities(s: string): string {
+  // &amp; must be decoded LAST, otherwise an input like "&amp;lt;" would first
+  // become "&lt;" and then wrongly decode to "<" (double-decode).
   return s
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
 }

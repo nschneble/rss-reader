@@ -112,8 +112,23 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify({ isStarred }),
       }),
-    markAllRead: () =>
-      jsonFetch<{ ok: true }>("/api/articles/mark-all-read", { method: "POST" }),
+    markAllRead: (params: {
+      feedId?: number;
+      folderId?: number;
+      starred?: boolean;
+      search?: string;
+    } = {}) => {
+      const sp = new URLSearchParams();
+      if (params.feedId != null) sp.set("feedId", String(params.feedId));
+      if (params.folderId != null) sp.set("folderId", String(params.folderId));
+      if (params.starred) sp.set("starred", "1");
+      if (params.search) sp.set("search", params.search);
+      const qs = sp.toString();
+      return jsonFetch<{ ok: true; updated: number }>(
+        `/api/articles/mark-all-read${qs ? `?${qs}` : ""}`,
+        { method: "POST" },
+      );
+    },
   },
   refresh: (feedId?: number) => {
     const url = feedId != null ? `/api/refresh?feedId=${feedId}` : "/api/refresh";
