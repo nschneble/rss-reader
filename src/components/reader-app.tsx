@@ -488,7 +488,7 @@ export function ReaderApp() {
       />
 
       <div
-        className="grid flex-1 min-h-0 lg:grid-cols-[260px_minmax(340px,400px)_1fr]"
+        className="grid flex-1 min-h-0 grid-rows-[minmax(0,1fr)] lg:grid-cols-[260px_minmax(340px,400px)_1fr]"
         inert={anyModalOpen || undefined}
       >
         <div
