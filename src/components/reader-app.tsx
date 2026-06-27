@@ -567,7 +567,7 @@ export function ReaderApp() {
       {error && (
         <div
           role="alert"
-          className="fixed bottom-4 right-4 max-w-sm bg-(--danger) text-white text-sm px-3 py-2 rounded shadow-lg flex items-start gap-2"
+          className="fixed bottom-4 right-4 max-w-sm bg-(--danger) text-(--danger-fg) text-sm px-3 py-2 rounded shadow-lg flex items-start gap-2"
         >
           <span className="flex-1">{error}</span>
           <button

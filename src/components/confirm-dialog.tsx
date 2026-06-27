@@ -54,8 +54,10 @@ export function ConfirmDialog({ request, onClose }: Props) {
               request?.onConfirm();
               onClose();
             }}
-            className={`px-3 py-1.5 text-sm rounded text-white hover:opacity-90 ${
-              request?.destructive ? "bg-(--danger)" : "bg-(--accent)"
+            className={`px-3 py-1.5 text-sm rounded hover:opacity-90 ${
+              request?.destructive
+                ? "bg-(--danger) text-(--danger-fg)"
+                : "bg-(--accent) text-(--accent-fg)"
             }`}
           >
             {request?.confirmLabel ?? "Confirm"}

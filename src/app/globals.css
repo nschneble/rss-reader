@@ -12,6 +12,7 @@
   --selected: #d7efe9;
   --selected-fg: #0b5345;
   --danger: #c81e1e;
+  --danger-fg: #ffffff;
 }
 
 @theme inline {
@@ -26,6 +27,7 @@
   --color-selected: var(--selected);
   --color-selected-fg: var(--selected-fg);
   --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -43,6 +45,7 @@
     --selected: #0c4a4e;
     --selected-fg: #cffaf0;
     --danger: #f87171;
+    --danger-fg: #0b1220;
   }
 }
 
