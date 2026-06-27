@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { FeedDTO, FolderDTO } from "@/lib/api-client";
 import {
   ChevronDownIcon,
@@ -85,7 +86,13 @@ export function Sidebar({
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-(--border)">
         <div className="flex items-center gap-2 font-semibold tracking-tight">
-          <RssIcon size={18} />
+          <Image
+            src="/logo.png"
+            alt=""
+            width={22}
+            height={22}
+            className="rounded-sm"
+          />
           <span>RSS Reader</span>
         </div>
         <button
