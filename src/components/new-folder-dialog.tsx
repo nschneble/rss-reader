@@ -58,7 +58,7 @@ export function NewFolderDialog({ open, onClose, onSubmit }: Props) {
             autoComplete="off"
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "folder-name-error" : undefined}
-            className="w-full px-3 py-2 rounded border border-(--border) bg-(--surface) focus:border-(--accent) outline-none"
+            className="w-full px-3 py-2 rounded border border-(--border-strong) bg-(--surface) focus:border-(--accent) outline-none"
           />
         </div>
         {error && (
