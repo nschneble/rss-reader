@@ -2,16 +2,18 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #0f172a;
-  --surface: #f8fafc;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --muted: #475569;
-  --accent: #0ea5e9;
+  --foreground: #0f262b;
+  --surface: #f1f7f7;
+  --surface-2: #f2e9e3;
+  --border: #6f9598;
+  --border-strong: #5d8689;
+  --muted: #456164;
+  --accent: #0c6b6f;
   --accent-fg: #ffffff;
-  --selected: #e0f2fe;
-  --selected-fg: #075985;
-  --danger: #dc2626;
+  --selected: #ece1f3;
+  --selected-fg: #4a2c63;
+  --danger: #a4264a;
+  --danger-fg: #ffffff;
 }
 
 @theme inline {
@@ -20,29 +22,33 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-selected: var(--selected);
   --color-selected-fg: var(--selected-fg);
   --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b1220;
-    --foreground: #e2e8f0;
-    --surface: #0f172a;
-    --surface-2: #1e293b;
-    --border: #1e293b;
-    --muted: #a3b2c4;
-    --accent: #38bdf8;
-    --accent-fg: #0b1220;
-    --selected: #0c4a6e;
-    --selected-fg: #e0f2fe;
-    --danger: #f87171;
+    --background: #0e1a1d;
+    --foreground: #e3eef0;
+    --surface: #14272b;
+    --surface-2: #2b211d;
+    --border: #4a747a;
+    --border-strong: #5a868c;
+    --muted: #a3bcc0;
+    --accent: #34c5c9;
+    --accent-fg: #06181b;
+    --selected: #3a2752;
+    --selected-fg: #ecdcf5;
+    --danger: #f08a9e;
+    --danger-fg: #1a0c10;
   }
 }
 
