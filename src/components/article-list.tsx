@@ -121,7 +121,7 @@ export function ArticleList({
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search articles…"
               aria-label="Search articles"
-              className="w-full pl-7 pr-2 py-1.5 text-sm rounded bg-(--surface) border border-(--border) focus:border-(--accent) outline-none"
+              className="w-full pl-7 pr-2 py-1.5 text-sm rounded bg-(--surface) border border-(--border-strong) focus:border-(--accent) outline-none"
             />
           </div>
           <label className="flex items-center gap-1.5 text-xs text-(--muted) cursor-pointer">

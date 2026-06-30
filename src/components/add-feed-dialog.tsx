@@ -61,7 +61,7 @@ export function AddFeedDialog({ open, onClose, onSubmit }: Props) {
             autoComplete="off"
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "feed-url-help feed-url-error" : "feed-url-help"}
-            className="w-full px-3 py-2 rounded border border-(--border) bg-(--surface) focus:border-(--accent) outline-none"
+            className="w-full px-3 py-2 rounded border border-(--border-strong) bg-(--surface) focus:border-(--accent) outline-none"
           />
           <p id="feed-url-help" className="text-xs text-(--muted) mt-1">
             Paste an RSS or Atom feed URL.
@@ -71,7 +71,7 @@ export function AddFeedDialog({ open, onClose, onSubmit }: Props) {
           <p
             id="feed-url-error"
             role="alert"
-            className="text-sm text-(--danger) bg-(--danger)/10 px-3 py-2 rounded"
+            className="text-sm text-(--danger-text) bg-(--danger)/10 px-3 py-2 rounded"
           >
             {error}
           </p>

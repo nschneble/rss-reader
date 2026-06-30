@@ -463,7 +463,12 @@ export function ReaderApp() {
   }, [selectionKey]);
 
   return (
-    <div className="h-screen flex flex-col">
+    // contain-paint stops the article list's nested scroller from leaking its
+    // height to the document (full-page height would otherwise equal the list).
+    // It also makes this the containing block for the fixed overlays/toast below
+    // — safe only while this box stays coincident with the viewport (h-screen,
+    // full width, no transform/margin). Keep it that way.
+    <div className="h-screen flex flex-col contain-paint">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-(--background) focus:text-(--foreground) focus:px-3 focus:py-2 focus:rounded focus:border focus:border-(--border) focus:shadow-lg"
@@ -488,7 +493,7 @@ export function ReaderApp() {
       />
 
       <div
-        className="grid flex-1 min-h-0 lg:grid-cols-[260px_minmax(340px,400px)_1fr]"
+        className="grid flex-1 min-h-0 grid-rows-[minmax(0,1fr)] lg:grid-cols-[260px_minmax(340px,400px)_1fr]"
         inert={anyModalOpen || undefined}
       >
         <div
@@ -567,7 +572,7 @@ export function ReaderApp() {
       {error && (
         <div
           role="alert"
-          className="fixed bottom-4 right-4 max-w-sm bg-(--danger) text-white text-sm px-3 py-2 rounded shadow-lg flex items-start gap-2"
+          className="fixed bottom-4 right-4 max-w-sm bg-(--danger) text-(--danger-fg) text-sm px-3 py-2 rounded shadow-lg flex items-start gap-2"
         >
           <span className="flex-1">{error}</span>
           <button
