@@ -71,7 +71,7 @@ export function AddFeedDialog({ open, onClose, onSubmit }: Props) {
           <p
             id="feed-url-error"
             role="alert"
-            className="text-sm text-(--danger) bg-(--danger)/10 px-3 py-2 rounded"
+            className="text-sm text-(--danger-text) bg-(--danger)/10 px-3 py-2 rounded"
           >
             {error}
           </p>
