@@ -65,4 +65,20 @@ describe("fetchAndParseFeed", () => {
     const feed = await fetchAndParseFeed("https://site.example/feed");
     expect(feed.items).toEqual([]);
   });
+
+  it("drops an item link with an unsafe scheme (javascript: XSS)", async () => {
+    fetchMock.mockResolvedValue(
+      rss(`<item><title>X</title><guid>g1</guid><link>javascript:alert(1)</link></item>`),
+    );
+    const feed = await fetchAndParseFeed("https://site.example/feed");
+    expect(feed.items[0].url).toBeNull();
+  });
+
+  it("keeps an item link with a safe http/https scheme", async () => {
+    fetchMock.mockResolvedValue(
+      rss(`<item><title>X</title><guid>g1</guid><link>https://site.example/post-1</link></item>`),
+    );
+    const feed = await fetchAndParseFeed("https://site.example/feed");
+    expect(feed.items[0].url).toBe("https://site.example/post-1");
+  });
 });

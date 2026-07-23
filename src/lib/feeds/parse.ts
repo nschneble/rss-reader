@@ -60,6 +60,19 @@ function parseDate(value: string | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+// Feed items are rendered as clickable links (see reader.tsx), so an item's
+// <link> must be restricted the same way sanitizeContent() restricts href/src
+// schemes in article body HTML — otherwise a javascript: link is clickable XSS.
+function safeItemUrl(url: string | undefined | null): string | null {
+  if (!url) return null;
+  try {
+    const scheme = new URL(url).protocol;
+    return scheme === "http:" || scheme === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 function pickFavicon(siteUrl: string | undefined | null): string | null {
   if (!siteUrl) return null;
   try {
@@ -85,7 +98,7 @@ export async function fetchAndParseFeed(url: string): Promise<ParsedFeed> {
       return {
         guid: pickGuid(item),
         title: (item.title || "(untitled)").trim(),
-        url: item.link ?? null,
+        url: safeItemUrl(item.link),
         author: item.creator || item["dc:creator"] || item.author || null,
         content: sanitizeContent(rawContent),
         summary: extractSummary(rawContent),
