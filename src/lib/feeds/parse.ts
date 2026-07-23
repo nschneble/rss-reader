@@ -77,6 +77,7 @@ function pickFavicon(siteUrl: string | undefined | null): string | null {
   if (!siteUrl) return null;
   try {
     const u = new URL(siteUrl);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
     return `${u.protocol}//${u.host}/favicon.ico`;
   } catch {
     return null;
